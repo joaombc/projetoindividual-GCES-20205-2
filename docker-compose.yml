@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: mkjs-postgres-dev
+    environment:
+      POSTGRES_USER: mkjs_user
+      POSTGRES_PASSWORD: mkjs_password
+      POSTGRES_DB: mkjs_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mkjs-network
+
+  servidor:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: mkjs-servidor-dev
+    ports:
+      - "55555:55555"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: mkjs_user
+      DB_PASSWORD: mkjs_password
+      DB_NAME: mkjs_db
+    depends_on:
+      - postgres
+    networks:
+      - mkjs-network
+    command: node server.js
+
+  cliente:
+    build:
+      context: ./game
+      dockerfile: Dockerfile.dev
+    container_name: mkjs-cliente-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./game:/app
+    networks:
+      - mkjs-network
+
+volumes:
+  postgres_data:
+
+networks:
+  mkjs-network:
+    driver: bridge
