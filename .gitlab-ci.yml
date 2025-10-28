@@ -1,0 +1,94 @@
+stages:
+  - build
+  - test
+  - lint
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+before_script:
+  - docker info
+
+build:servidor:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - cd server
+    - docker build -f Dockerfile.dev -t mkjs-servidor:dev .
+    - docker build -f Dockerfile.prod -t mkjs-servidor:prod .
+  tags:
+    - docker
+
+build:cliente:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - cd game
+    - docker build -f Dockerfile.dev -t mkjs-cliente:dev .
+    - docker build -f Dockerfile.prod -t mkjs-cliente:prod .
+  tags:
+    - docker
+
+test:servidor:
+  stage: test
+  image: node:16
+  script:
+    - cd server
+    - npm install
+    - npm test
+  tags:
+    - docker
+
+test:cliente:
+  stage: test
+  image: node:16
+  script:
+    - cd game
+    - npm install
+    - npm test
+  tags:
+    - docker
+
+lint:servidor:
+  stage: lint
+  image: node:16
+  script:
+    - cd server
+    - npm install
+    - npm run lint
+  tags:
+    - docker
+
+lint:cliente:
+  stage: lint
+  image: node:16
+  script:
+    - cd game
+    - npm install
+    - npm run lint
+  tags:
+    - docker
+
+deploy:registry:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - cd server
+    - docker build -f Dockerfile.prod -t $CI_REGISTRY_IMAGE/servidor:latest .
+    - docker push $CI_REGISTRY_IMAGE/servidor:latest
+    - cd ../game
+    - docker build -f Dockerfile.prod -t $CI_REGISTRY_IMAGE/cliente:latest .
+    - docker push $CI_REGISTRY_IMAGE/cliente:latest
+  only:
+    - main
+  tags:
+    - docker

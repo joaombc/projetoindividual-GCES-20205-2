@@ -1,0 +1,16 @@
+{
+  "name": "mk.js-client",
+  "version": "0.0.1",
+  "author": "Minko Gechev @mgechev",
+  "description": "HTML5 Canvas client for mk.js",
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "eslint": "^8.40.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint src/"
+  },
+  "license": "MIT"
+}
